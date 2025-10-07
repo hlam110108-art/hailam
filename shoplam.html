@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShopHlam — Cửa hàng shop</title>
+  <meta name="description" content="Trang bán hàng mẫu - responsive, giỏ hàng, checkout" />
+  <style>
+    :root{
+      --accent:#0d6efd;
+      --muted:#6c757d;
+      --bg:#f8f9fa;
+      --card:#ffffff;
+      --danger:#dc3545;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, Arial, sans-serif; margin:0; background:var(--bg); color:#222;}
+    a{color:inherit;text-decoration:none}
+    header{background:#fff; border-bottom:1px solid #e6e9ee; position:sticky; top:0; z-index:50;}
+    .container{max-width:1100px;margin:0 auto;padding:16px;}
+    .topbar{display:flex;align-items:center;gap:12px;justify-content:space-between;}
+    .logo{display:flex;gap:12px;align-items:center;}
+    .logo h1{font-size:18px;margin:0;color:var(--accent)}
+    .searchbar{flex:1; margin:0 16px;}
+    .searchbar input{width:100%; padding:10px 12px;border:1px solid #d6dbe8;border-radius:10px;}
+    .icons{display:flex;gap:12px;align-items:center;}
+    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;}
+    .btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+    .badge{background:var(--danger);color:#fff;padding:4px 8px;border-radius:12px;font-size:12px;}
+
+    main{padding:20px 0;}
+    .grid{display:grid;grid-template-columns: 260px 1fr; gap:18px; align-items:flex-start;}
+    aside{background:var(--card);padding:16px;border-radius:12px;border:1px solid #eef1f6;}
+    .filter-group{margin-bottom:16px;}
+    .filter-group h4{margin:0 0 8px 0;font-size:14px;color:var(--muted)}
+    .product-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+    .card{background:var(--card);padding:12px;border-radius:12px;border:1px solid #eef1f6;display:flex;flex-direction:column;}
+    .card img{width:100%;height:160px;object-fit:cover;border-radius:8px;}
+    .price{font-weight:700;color:var(--accent);margin-top:8px}
+    .meta{font-size:13px;color:var(--muted)}
+    .card .actions{margin-top:auto;display:flex;gap:8px;align-items:center;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:80;}
+    .modal{background:#fff;padding:20px;border-radius:12px;max-width:720px;width:95%;max-height:90vh;overflow:auto;}
+    .close{background:#eee;border-radius:8px;padding:6px;cursor:pointer;border:0}
+
+    .cart-panel{position:fixed;right:18px;bottom:18px;background:var(--card);border-radius:12px;padding:12px;border:1px solid #e6e9ee;box-shadow:0 8px 30px rgba(10,10,10,0.08);width:320px;max-height:70vh;overflow:auto;display:none;z-index:90;}
+    .cart-item{display:flex;gap:8px;align-items:center;border-bottom:1px dashed #eee;padding:8px 0}
+    .cart-item img{width:56px;height:56px;object-fit:cover;border-radius:6px}
+
+    form .row{display:flex;gap:8px}
+    form label{display:block;font-size:13px;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:8px;border:1px solid #dbe4f2;border-radius:8px}
+    .muted{color:var(--muted);font-size:13px}
+
+
+    footer{padding:20px 0;color:var(--muted);font-size:14px;text-align:center}
+
+
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr; padding:0 12px}
+      aside{order:2}
+      .searchbar{margin:10px 0 0}
+      .cart-panel{right:12px;left:12px;width:auto;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <rect width="24" height="24" rx="6" fill="#0d6efd"/>
+          <path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M6 8h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <h1>ShopHlam</h1>
+        <div class="muted" style="font-size:13px;">Cửa hàng shop</div>
+      </div>
+
+      <div class="searchbar">
+        <input id="searchInput" type="search" placeholder="Tìm sản phẩm, ví dụ: Màn hình, PC..." />
+      </div>
+
+      <div class="icons">
+        <button class="btn secondary" id="filterToggle">Bộ lọc</button>
+        <button class="btn secondary" id="authBtn">Đăng nhập</button>
+        <button class="btn" id="cartBtn">Giỏ hàng <span id="cartCount" class="badge" style="display:none">0</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <aside id="filters">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong>Lọc & Sắp xếp</strong>
+          <button class="close" id="resetFilters">Đặt lại</button>
+        </div>
+
+        <div class="filter-group">
+          <h4>Danh mục</h4>
+          <div><label><input type="checkbox" class="cat" value="Điện tử" /> Laptop</label></div>
+          <div><label><input type="checkbox" class="cat" value="Phụ kiện" /> Phụ kiện</label></div>
+          <div><label><input type="checkbox" class="cat" value="PC" /> PC</label></div>
+          <div><label><input type="checkbox" class="cat" value="Màn hình" /> Màn hình</label></div>
+        </div>
+
+        <div class="filter-group">
+          <h4>Khoảng giá (VNĐ)</h4>
+          <select id="priceRange">
+            <option value="all">Tất cả</option>
+            <option value="0-1000000">0 - 1.000.000</option>
+            <option value="1000000-10000000">1.000.000 - 10.000.000</option>
+            <option value="10000000-500000000">10.000.000 - 500.000.000</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <h4>Sắp xếp</h4>
+          <select id="sortBy">
+            <option value="relevance">Liên quan</option>
+            <option value="price-asc">Giá: thấp → cao</option>
+            <option value="price-desc">Giá: cao → thấp</option>
+            <option value="rating-desc">Đánh giá: cao → thấp</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <h4>Giao hàng</h4>
+          <label><input type="checkbox" id="fastShip" /> Giao nhanh</label>
+        </div>
+
+        <div class="muted" style="margin-top:12px;"></div>
+      </aside>
+
+      <section>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <h2 style="margin:0 0 6px 0">Sản phẩm nổi bật</h2>
+            <div class="muted" id="resultInfo">Hiển thị tất cả sản phẩm</div>
+          </div>
+          <div>
+            <button class="btn" id="openCheckout">Thanh toán</button>
+          </div>
+        </div>
+
+        <div class="product-list" id="productList">
+        </div>
+      </section>
+    </div>
+  </main>
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 id="modalTitle" style="margin:0">Chi tiết sản phẩm</h3>
+        <button class="close" id="closeModal">✕</button>
+      </div>
+      <div id="modalBody">
+
+      </div>
+    </div>
+  </div>
+
+  <div class="cart-panel" id="cartPanel" aria-hidden>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <strong>Giỏ hàng</strong>
+      <button class="close" id="closeCart">✕</button>
+    </div>
+    <div id="cartItems" style="margin-top:12px"></div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div class="muted">Tạm tính</div>
+        <div id="cartSubtotal" style="font-weight:700">0 ₫</div>
+      </div>
+      <div>
+        <button class="btn" id="checkoutFromCart">Mua hàng</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="checkoutBackdrop" aria-hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 id="checkoutTitle" style="margin:0">Thanh toán</h3>
+        <button class="close" id="closeCheckoutModal">✕</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
+        <div>
+          <form id="checkoutForm">
+            <label>Họ & Tên <span class="muted">*</span>
+              <input id="custName" required />
+            </label>
+            <label>Điện thoại <span class="muted">*</span>
+              <input id="custPhone" required pattern="^[0-9+() -]{7,25}$" />
+            </label>
+
+            <label>Địa chỉ nhận hàng <span class="muted">*</span>
+              <input id="custAddress" required />
+            </label>
+
+            <label>Phương thức thanh toán
+              <select id="paymentMethod">
+                <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+                <option value="card">Thẻ/Tài khoản</option>
+              </select>
+            </label>
+
+            <label>Ghi chú
+              <textarea id="note" rows="3"></textarea>
+            </label>
+
+            <div style="margin-top:12px;display:flex;gap:8px;">
+              <button type="submit" class="btn">Xác nhận đơn</button>
+              <button type="button" class="btn secondary" id="cancelCheckout">Hủy</button>
+            </div>
+          </form>
+        </div>
+
+        <aside style="background:#fafbfd;padding:12px;border-radius:10px;border:1px solid #eef4ff">
+          <strong>Đơn hàng</strong>
+          <div id="orderSummary" style="margin-top:10px"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+<div class="modal-backdrop" id="authBackdrop" aria-hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 id="authTitle" style="margin:0">Đăng nhập</h3>
+      <button class="close" id="closeAuth">✕</button>
+    </div>
+
+    <div>
+      <div id="authTabs" style="margin-bottom:12px;display:flex;gap:8px;">
+        <button class="btn" id="loginTab">Đăng nhập</button>
+        <button class="btn secondary" id="registerTab">Đăng ký</button>
+      </div>
+
+      <form id="loginForm">
+        <label>Email
+          <input id="loginEmail" type="email" required />
+        </label>
+        <label>Mật khẩu
+          <input id="loginPassword" type="password" required />
+        </label>
+        <div style="margin-top:12px">
+          <button type="submit" class="btn">Đăng nhập</button>
+        </div>
+      </form>
+
+      <form id="registerForm" style="display:none">
+        <label>Tên
+          <input id="regName" required />
+        </label>
+        <label>Email
+          <input id="regEmail" type="email" required />
+        </label>
+        <label>Mật khẩu
+          <input id="regPassword" type="password" required minlength="4"/>
+        </label>
+        <div style="margin-top:12px">
+          <button type="submit" class="btn">Đăng ký</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <footer>
+    <div class="container">
+    </div>
+  </footer>
+   <script>
+    const PRODUCTS = [
+      { id: 'p1', title: 'Laptop MSI Modern 14 C12MO-660VN', price: 11790000, category:'Điện tử', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_5_16.png', fastShip:true, desc:'Laptop MSI Modern 14 C12MO-660VN sở hữu con chip Intel I5-1235U cùng bộ nhớ RAM lớn 16GB thoải mái đa nhiệm. Cùng với đó sản phẩm còn mang lại khả năng lưu trữ thoải mái với ổ cứng SSD PCIE dung lượng 512GB. Máy còn sở hữu màn hình kích thước 14 inch FHD hỗ trợ hiển thị hình ảnh sống động.' },
+      { id: 'p2', title: 'Laptop ASUS TUF Gaming F16 FX607VJ-RL034W', price: 20990000, category:'Điện tử', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_7__4_146.png', fastShip:true, desc:'Laptop ASUS TUF Gaming F16 FX607VJ-RL034W tối ưu trải nghiệm gaming với chip Intel Core 5 210H, kết hợp cùng màn hình 16" FHD+ 144Hz và 16 GB RAM. Sản phẩm tích hợp hệ thống Wi-Fi 6 và cổng USB-C đa năng. Đặc biệt, mẫu laptop có thiết kế Mecha Gray bền bỉ cùng bàn phím RGB với phím Copilot tiện lợi.' },
+      { id: 'p3', title: 'Laptop ASUS VivoBook Go 14 E1404FA-NK177W', price: 11290000, category:'Điện tử', rating:4.6, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_-_2023-06-08t001431.312_2.png', fastShip:false, desc:'Laptop ASUS Vivobook Go 14 E1404FA-NK177W sở hữu một thiết kế gọn nhẹ cùng bản lề có thể mở rộng đến 180 độ. Laptop mang lại khả năng hiển thị tốt với màn hình 14 inch FHD cùng viền NanoEdge siêu mỏng. Cùng với đó, sản phẩm còn sở hữu một hiệu năng mạnh mẽ với bộ nhớ RAM 16GB LPDDR5 cùng vi xử lý AMD Ryzen™ 5 7520U.'},
+      { id: 'p4', title: 'Laptop Dell 15 DC15250 79N4M - Nhập khẩu chính hãng', price: 11160000, category:'Điện tử', rating:4.3, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_2__10_104_1.png', fastShip:false, desc:'Đang cập nhật'},
+      { id: 'p5', title: 'Laptop Acer Aspire Lite 15 AL15-41P-R3U5 NX.J53SV.001', price: 12290000, category:'Điện tử', rating:4.4, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_9__7_17_1.png', fastShip:false, desc:'Laptop Acer Aspire Lite 15 AL15-41P-R3U5 với chip AMD Ryzen 7 5700U và AMD Radeon Graphics cung cấp khả năng xử lý mượt mà cho các tác vụ văn phòng. Mẫu laptop Acer Aspire này còn được trang bị tới 16GB RAM để người dùng thoải sức thực hiện đa nhiệm. Vẻ ngoài thanh lịch, mỏng nhẹ giúp laptop phù hợp sử dụng trong nhiều không gian.'},
+      { id: 'p6', title: 'Ổ cứng di động SSD Kingston XS1000 USB 3.2 Gen 2 1TB Đen', price: 2050000, category:'Phụ kiện', rating:4.6, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/o/-/o-cung-di-dong-ssd-kingston-xs1000-usb-3-2-gen-2-den-1tb_4_.png', fastShip:false, desc:'Ổ cứng di động SSD Kingston XS1000 USB 3.2 thể hiện sự vượt trội với dung lượng khổng lồ, tốc độ đọc ghi nhanh chóng và khả năng tương thích đa dạng. Sản phẩm ổ cứng di động này giúp đáp ứng đầy đủ nhu cầu lưu trữ và truy cập dữ liệu của bạn cho dù bạn là một người làm việc chuyên nghiệp, game thủ hay người dùng thông thường.'},
+      { id: 'p7', title: 'Tản nhiệt khí Xigmatek EPIX II', price: 449000, category:'Phụ kiện', rating:4.2, img:'https://cdn2.cellphones.com.vn/358x/media/catalog/product/t/e/text_ng_n_25__7_27.png', fastShip:false, desc:'Tản nhiệt khí'},
+      { id: 'p8', title: 'Ổ cứng di động SSD Transcend ESD310C 1050MB/s 256GB', price: 829000, category:'Phụ kiện', rating:4.3, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/o/-/o-cung-di-dong-ssd-transcend-esd310c-1050mbs-256gb_4_.png', fastShip:true, desc:' Ổ cứng di động SSD Transcend ESD310C 1050MBS 256GB sở hữu khả năng truyền tải lên tới 10Gbps để phù hợp sử dụng lưu trữ những dữ liệu có kích thước lớn. Sản phẩm được thiết kế dạng ổ cứng SSD siêu nhỏ gọn để người dùng dễ dàng bỏ túi và mang theo mọi nơi. Đi kèm là 2 đầu kết nối USB-C và USB-A để mang tới khả năng kết nối vô tận với nhiều loại thiết bị.' },
+      { id: 'p9', title: 'Ổ cứng SSD Kingston NV3 PCIe 4.0 NVMe 1TB', price: 1790000, category:'Phụ kiện', rating:4.6, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/g/r/group_301_1__1.png', fastShip:true, desc:'Ổ cứng SSD Kingston NV3 PCIe 4.0 NVMe 1TB với giao tiếp PCIe Gen 4x4 mang lại tốc độ đọc lên đến 6000MB/s và ghi đạt 4000MB/s, mang lại tốc độ vượt trội. Với thiết kế M.2 2280 nhỏ gọn, sản phẩm ổ cứng SSD Kingston dễ dàng lắp đặt vào nhiều loại máy tính xách tay và máy tính để bàn. Dung lượng 1TB cung cấp không gian lưu trữ rộng rãi cho hệ điều hành, ứng dụng và dữ liệu cá nhân.' },
+      { id: 'p10', title: 'VGA Asrock AMD Radeon RX 6600 Challenger D 8GB (RX6600 CLD 8G)', price: 5490000, category:'Phụ kiện', rating:4.1, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/v/g/vga-asrock-amd-radeon-rx-6600-challenger-d-8gb_1_.png', fastShip:false, desc:'VGA ASRock AMD Radeon RX 6600 Challenger D 8GB là một card đồ họa hiệu năng tốt với bộ nhớ 8GB GDDR6 cùng bộ vi xử lý AMD Radeon RX 6600 vượt trội. Mẫu VGA AMD này có dung lượng 8GB GDDR6, đủ để xử lý các trò chơi hiện đại và các ứng dụng đồ họa chuyên sâu với chất lượng hình ảnh cao.' },
+      { id: 'p11', title: 'CPU Intel Core i5 14400F', price: 3690000, category:'Phụ kiện', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/c/p/cpu-intel-core-i5-14400f_2_.png', fastShip:true, desc:'CPU Intel Core i5-14600T là một phần của dòng sản phẩm Alder Lake của Intel, với 10 nhân và tổng cộng 16 luồng, đảm bảo khả năng xử lý mượt mà, êm ái. Base Clock cho P-Core ở mức 2.5 GHz, tạo nền tảng ổn định. Đáng chú ý, sản phẩm CPU Intel này có TDP ở mức 65W cho khả năng cân bằng giữa hiệu năng và làm mát hiệu quả.' },
+      { id: 'p12', title: 'CPU AMD Ryzen 7 9800X3D (WOF)', price: 14350000, category:'Phụ kiện', rating:4.6, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/c/p/cpu-amd-ryzen-7-9800x3d_1_.png', fastShip:true, desc:'CPU AMD Ryzen 7 9800X3D xây dựng trên kiến trúc Zen 5, có 8 nhân và 16 luồng, xung nhịp cơ bản 4.7 GHz và tối đa 5.2 GHz, bộ nhớ cache tổng cộng 104 MB. Sản phẩm áp dụng công nghệ 3D V-Cache, sử dụng socket AM5 hỗ trợ nhiều chipset mới. Linh kiện CPU AMD có mức TDP 120W, hỗ trợ AMD EXPO Memory Overclocking giúp tối ưu sức mạnh của RAM.' },
+      { id: 'p13', title: 'PC CPS Gaming G04 i5 12400F / 16GB - 256GB / RX 6500', price: 11560000, category:'PC', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_7__2_165_10.png', fastShip:true, desc:'PC CPS Gaming G04 được đánh giá cao bởi tính năng và thiết kế ấn tượng của sản phẩm, nhiều khách hàng tin tưởng sử dụng trong thời gian dài để thay mới cho máy cũ hiện tại. Mẫu PC gaming này là lựa chọn hàng đầu dành cho các game thủ chuyên nghiệp mang đến quá trình hoạt động bền bỉ và mượt mà.' },
+      { id: 'p14', title: 'PC CPS Creator Ultra AI A950 AMD Ryzen 9 9950X / RTX 5070 Ti', price: 70390000, category:'PC', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_8__6_115.png', fastShip:true, desc:'PC CPS Creator Ultra AI A950 là dòng máy trạm cao cấp, được thiết kế riêng cho công việc sáng tạo nội dung, AI, dựng hình 3D và xử lý dữ liệu chuyên sâu. Sản phẩm máy tính đồ họa trang bị vi xử lý AMD Ryzen 9 9950X, cùng thanh RAM 64GB DDR5 mạnh mẽ. Dòng PC CPS này có ổ cứng SSD Kingston 1TB cho tốc độ truy xuất nhanh, đảm bảo hiệu suất tối ưu mọi tác vụ nặng.' },
+      { id: 'p15', title: 'PC CPS Creator AI A147 i7-14700K / RTX 5070', price: 47990000, category:'PC', rating:4.4, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/1/-/1-96_1_6.png', fastShip:true, desc:'PC CPS Creator AI A147 được trang bị bộ CPU Intel Core I7-14700K tiên tiến, kết hợp ổ cứng SSD dung lượng 1TB cộng thêm RAM chuẩn DDR5 32GB, tốc độ 6000MHz. Bên cạnh đó, mẫu máy tính đồ họa này còn tích hợp tản nhiệt nước XIGMATEK LK 360 Digital. Bên cạnh đó, vỏ case cao cấp được thiết kế rộng rãi, phù hợp với nhiều nhu cầu lắp đặt và nâng cấp linh kiện.' },
+      { id: 'p16', title: 'PC CPS Creator Pro 570 AMD Ryzen 7 5700X / RTX 3060', price: 20290000, category:'PC', rating:4.2, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/c/a/case-may-tinh-xigmatek-pano-m_2_1.png', fastShip:true, desc:'PC CPS Creator Pro 570 được ưu ái trang bị vi xử lý AMD Ryzen 5 5700X với xung nhịp tối đa 4.6GHz, giúp xử lý tác vụ nhanh chóng và tiết kiệm điện năng. Chiếc máy tính đồ họa này sở hữu RAM Adata XPG D35G RGB 16GB 3200MHz DDR4, hỗ trợ đa nhiệm mượt mà. Kèm theo đó là VGA Asus Dual GeForce RTX 3060 OC 12GB giúp tăng cường hiệu suất xử lý hình ảnh.' },
+      { id: 'p17', title: 'PC CPS Creator Ultra AI H149 i9-14900K / RTX 5090', price: 136990000, category:'PC', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/c/a/case-may-tinh-corsair-6500x-temp.png', fastShip:true, desc:'Bộ PC lắp sẵn PC CPS Creator Ultra AI H149 được trang bị vi xử lý Intel Core i9-14900K đi kèm RAM Kingston Fury 64GB và SSD PCIe Gen 4 dung lượng 2TB. Bo mạch chủ MSI Z790 Gaming Plus WF được kết hợp với card đồ họa ASUS TUF Gaming RTX 5090 OC 32GB, mang đến khả năng xử lý đồ họa mạnh mẽ. Hệ thống máy tính đồ họa này còn được trang bị tản nhiệt nước Corsair iCUE Link Titan 360 cùng bộ nguồn Corsair RM1000X Shift, đảm bảo hiệu suất làm mát và cấp điện ổn định.' },
+      { id: 'p18', title: 'Màn hình Gaming Samsung Odyssey G5 LS27CG552 27 inch', price: 4390000, category:'Màn hình', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/m/a/man-hinh-gaming-samsung-odyssey-g5-ls27cg552-27-inch_10_.png', fastShip:true, desc:'Màn hình gaming Samsung ODYSSEY G5 LS27CG552 27 inch sở hữu khả năng hiển thị vượt trội với sự kết hợp giữa độ phân giải QHD cùng với công nghệ HDR10. Màn hình còn sở hữu tần số quét 165Hz cùng với đó là tốc độ phản hồi nhanh chỉ 1ms (MPRT) mang lại các phản hồi nhanh chóng. Cùng với đó, mẫu màn hình Samsung này còn được trang bị công nghệ AMD Freesync giúp tối ưu các hiển thị gaming.' },
+      { id: 'p19', title: 'Màn hình Samsung Gaming Odyssey G5 LC34G55TWWEXXV 34 inch', price: 7490000, category:'Màn hình', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/3/6/36_1_25.jpg', fastShip:true, desc:'Đang cập nhật' }, 
+      { id: 'p20', title: 'Màn hình ASUS VU249CFE 24 inch', price: 2590000, category:'Màn hình', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_5__9_52.png', fastShip:true, desc:'Màn hình ASUS VU249CFE 24 inch mang đến trải nghiệm hình ảnh rõ nét với độ phân giải Full HD và tần số quét 100Hz, phù hợp cho cả chơi game và công việc. Tấm nền IPS trên màn hình văn phòng này đảm bảo màu sắc sống động trong khi Eye Care Plus giúp giảm mỏi mắt. Khả năng kết nối linh hoạt qua USB-C, HDMI và phần mềm DisplayWidget Center, tạo sự tiện lợi khi sử dụng. ' },
+    ];
+
+    const formatVND = n => n.toLocaleString('vi-VN') + ' ₫';
+
+    const productListEl = document.getElementById('productList');
+    const resultInfo = document.getElementById('resultInfo');
+    const searchInput = document.getElementById('searchInput');
+
+    function renderProducts(list){
+      productListEl.innerHTML = '';
+      if(!list.length){
+        productListEl.innerHTML = '<div class="muted">Không có sản phẩm phù hợp.</div>';
+        resultInfo.textContent = '0 sản phẩm';
+        return;
+      }
+      resultInfo.textContent = `Hiển thị ${list.length} sản phẩm`;
+      for(const p of list){
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${p.img}" alt="${escapeHtml(p.title)}" loading="lazy" />
+          <div style="margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+              <div style="font-weight:600">${escapeHtml(p.title)}</div>
+              <div class="meta">${p.rating} ★</div>
+              </div>
+            <div class="price">${formatVND(p.price)}</div>
+            <div class="muted" style="font-size:13px;margin-top:6px">${escapeHtml(p.category)} • ${p.fastShip ? 'Giao nhanh' : 'Giao tiêu chuẩn'}</div>
+          </div>
+          <div class="actions">
+            <button class="btn" data-action="add" data-id="${p.id}">Thêm vào giỏ</button>
+            <button class="btn secondary" data-action="view" data-id="${p.id}">Xem</button>
+          </div>
+        `;
+        productListEl.appendChild(card);
+      }
+    }
+
+    function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[s]); }
+
+    function getFilters(){
+      const cats = Array.from(document.querySelectorAll('.cat:checked')).map(i=>i.value);
+      const price = document.getElementById('priceRange').value;
+      const sort = document.getElementById('sortBy').value;
+      const fast = document.getElementById('fastShip').checked;
+      const q = searchInput.value.trim().toLowerCase();
+      return {cats,price,sort,fast,q};
+    }
+
+    function applyFilters(){
+      const f = getFilters();
+      let out = PRODUCTS.slice();
+
+      if(f.cats.length) out = out.filter(p=>f.cats.includes(p.category));
+      if(f.price !== 'all'){
+        const [min,max] = f.price.split('-').map(Number);
+        out = out.filter(p=>p.price >= min && p.price <= max);
+      }
+      if(f.fast) out = out.filter(p=>p.fastShip);
+      if(f.q) out = out.filter(p => (p.title + ' ' + p.desc + ' ' + p.category).toLowerCase().includes(f.q));
+      // sort
+      if(f.sort === 'price-asc') out.sort((a,b)=>a.price-b.price);
+      if(f.sort === 'price-desc') out.sort((a,b)=>b.price-a.price);
+      if(f.sort === 'rating-desc') out.sort((a,b)=>b.rating-b.rating? b.rating - a.rating : b.price - a.price);
+
+      renderProducts(out);
+    }
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalBody = document.getElementById('modalBody');
+    document.getElementById('closeModal').addEventListener('click', ()=> modalBackdrop.style.display = 'none');
+
+    function openProductModal(id){
+      const p = PRODUCTS.find(x=>x.id===id);
+      if(!p) return;
+      modalBody.innerHTML = `
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:12px">
+          <div><img src="${p.img}" alt="${escapeHtml(p.title)}" style="width:100%;height:260px;object-fit:cover;border-radius:8px" /></div>
+          <div>
+            <h3 style="margin-top:0">${escapeHtml(p.title)}</h3>
+            <div class="muted">${p.category} • ${p.rating} ★</div>
+            <div class="price" style="margin-top:8px">${formatVND(p.price)}</div>
+            <p style="margin-top:10px">${escapeHtml(p.desc)}</p>
+            <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+                <button class="btn" id="modalAdd" data-id="${p.id}">Thêm vào giỏ</button>
+              <div class="muted">Số lượng:
+                <select id="modalQty">
+                  <option>1</option><option>2</option><option>3</option><option>4</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modalBackdrop.style.display = 'flex';
+      document.getElementById('modalAdd').addEventListener('click', (e)=>{
+        const id = e.target.dataset.id;
+        const qty = Number(document.getElementById('modalQty').value);
+        addToCart(id, qty);
+        modalBackdrop.style.display = 'none';
+      });
+    }
+
+    const CART_KEY = 'shopdemo_cart_v1';
+    function loadCart(){ try{ return JSON.parse(localStorage.getItem(CART_KEY)) || {}; }catch(e){return {}} }
+    function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); renderCartUI(); }
+
+    function addToCart(id, qty=1){
+      const cart = loadCart();
+      cart[id] = (cart[id] || 0) + qty;
+      saveCart(cart);
+      showToast('Đã thêm vào giỏ');
+    }
+
+    function setCartQty(id, qty){
+      const cart = loadCart();
+      if(qty <= 0) delete cart[id];
+      else cart[id] = qty;
+      saveCart(cart);
+    }
+
+    function emptyCart(){ localStorage.removeItem(CART_KEY); renderCartUI(); }
+
+    const cartBtn = document.getElementById('cartBtn');
+    const cartPanel = document.getElementById('cartPanel');
+    const cartItemsEl = document.getElementById('cartItems');
+    const cartCountEl = document.getElementById('cartCount');
+    const cartSubtotalEl = document.getElementById('cartSubtotal');
+
+    function renderCartUI(){
+      const cart = loadCart();
+      const ids = Object.keys(cart);
+      cartItemsEl.innerHTML = '';
+      let total = 0;
+      let totalCount = 0;
+      if(!ids.length){
+        cartItemsEl.innerHTML = '<div class="muted">Giỏ hàng trống.</div>';
+        cartCountEl.style.display = 'none';
+        cartCountEl.textContent = '0';
+        cartSubtotalEl.textContent = formatVND(0);
+        return;
+      }
+      for(const id of ids){
+        const p = PRODUCTS.find(x=>x.id===id);
+        if(!p) continue;
+        const qty = cart[id];
+        total += p.price * qty;
+        totalCount += qty;
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <img src="${p.img}" alt="${escapeHtml(p.title)}" />
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-weight:600">${escapeHtml(p.title)}</div>
+              <div style="font-weight:700">${formatVND(p.price)}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+                <input type="number" min="1" value="${qty}" style="width:70px;padding:6px;border-radius:6px;border:1px solid #e4eaf5" data-id="${id}" class="cartQty" />
+              <button class="close" data-id="${id}" data-action="remove">Xóa</button>
+            </div>
+          </div>
+        `;
+        cartItemsEl.appendChild(div);
+      }
+      cartCountEl.style.display = totalCount ? 'inline-block' : 'none';
+      cartCountEl.textContent = totalCount;
+      cartSubtotalEl.textContent = formatVND(total);
+
+      Array.from(document.querySelectorAll('.cartQty')).forEach(inp=>{
+        inp.addEventListener('change', (e)=>{
+          const id = e.target.dataset.id;
+          const q = Math.max(1, Math.floor(Number(e.target.value) || 1));
+          setCartQty(id, q);
+        });
+      });
+      Array.from(document.querySelectorAll('[data-action="remove"]')).forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          setCartQty(e.target.dataset.id, 0);
+        });
+      });
+    }
+
+    cartBtn.addEventListener('click', ()=>{
+      cartPanel.style.display = cartPanel.style.display === 'block' ? 'none' : 'block';
+      renderCartUI();
+    });
+    document.getElementById('closeCart').addEventListener('click', ()=> cartPanel.style.display = 'none');
+    document.getElementById('checkoutFromCart').addEventListener('click', ()=>{
+      cartPanel.style.display = 'none';
+      openCheckout();
+    });
+
+    const checkoutBackdrop = document.getElementById('checkoutBackdrop');
+    const orderSummary = document.getElementById('orderSummary');
+    function openCheckout(){
+
+      const cart = loadCart();
+      const ids = Object.keys(cart);
+      if(!ids.length){
+        showToast('Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
+        return;
+      }
+      let html = '<div style="max-height:320px;overflow:auto">';
+      let total = 0;
+      for(const id of ids){
+        const p = PRODUCTS.find(x=>x.id===id);
+        if(!p) continue;
+        const q = cart[id];
+        html += `<div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                   <div><strong>${escapeHtml(p.title)}</strong><div class="muted" style="font-size:13px">${q} x ${formatVND(p.price)}</div></div>
+                   <div style="font-weight:700">${formatVND(p.price*q)}</div>
+                 </div>`;
+        total += p.price * q;
+      }
+      html += `</div><hr/><div style="display:flex;justify-content:space-between"><div class="muted">Tổng</div><div style="font-weight:800">${formatVND(total)}</div></div>`;
+      orderSummary.innerHTML = html;
+      checkoutBackdrop.style.display = 'flex';
+    }
+
+    document.getElementById('openCheckout').addEventListener('click', openCheckout);
+    document.getElementById('closeCheckoutModal').addEventListener('click', ()=> checkoutBackdrop.style.display = 'none');
+    document.getElementById('cancelCheckout').addEventListener('click', ()=> checkoutBackdrop.style.display = 'none');
+    
+    document.getElementById('checkoutForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const addr = document.getElementById('custAddress').value.trim();
+      if(!name || !phone || !addr){ showToast('Vui lòng điền đầy đủ thông tin giao hàng.'); return; }
+      const orderId = 'DH' + Date.now();
+      emptyCart();
+      checkoutBackdrop.style.display = 'none';
+      showModalMessage('Đặt hàng thành công', `Cảm ơn ${escapeHtml(name)}! Đơn hàng <strong>${orderId}</strong> đã được ghi nhận. Nhân viên sẽ liên hệ sớm.`);
+    });
+
+    document.addEventListener('click', (e)=>{
+      const a = e.target.closest('[data-action]');
+      if(a){
+        const action = a.dataset.action;
+        const id = a.dataset.id;
+        if(action === 'add') addToCart(id, 1);
+        if(action === 'view') openProductModal(id);
+      }
+    });
+
+    searchInput.addEventListener('input', debounce(applyFilters, 300));
+    document.getElementById('priceRange').addEventListener('change', applyFilters);
+    document.getElementById('sortBy').addEventListener('change', applyFilters);
+    document.getElementById('fastShip').addEventListener('change', applyFilters);
+    document.querySelectorAll('.cat').forEach(i=>i.addEventListener('change', applyFilters));
+    document.getElementById('resetFilters').addEventListener('click', ()=>{
+      searchInput.value = '';
+      document.getElementById('priceRange').value='all';
+      document.getElementById('sortBy').value='relevance';
+      document.getElementById('fastShip').checked = false;
+      document.querySelectorAll('.cat').forEach(c=>c.checked=false);
+      applyFilters();
+    });
+
+    function showToast(msg, duration=1800){
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.position = 'fixed';
+      t.style.left = '50%';
+      t.style.bottom = '60px';
+      t.style.transform = 'translateX(-50%)';
+      t.style.padding = '10px 14px';
+      t.style.background = 'rgba(0,0,0,0.8)';
+      t.style.color = '#fff';
+      t.style.borderRadius = '8px';
+      t.style.zIndex = 200;
+      document.body.appendChild(t);
+      setTimeout(()=> t.style.opacity = '0.01', duration);
+      setTimeout(()=> t.remove(), duration + 300);
+    }
+    function showModalMessage(title, html){
+      modalBackdrop.style.display = 'flex';
+      document.getElementById('modalTitle').textContent = title;
+      modalBody.innerHTML = `<div>${html}</div><div style="margin-top:12px"><button class="btn" id="modalOk">OK</button></div>`;
+      document.getElementById('modalOk').addEventListener('click', ()=> modalBackdrop.style.display = 'none');
+    }
+
+    function debounce(fn, ms=200){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); } }
+
+    applyFilters();
+    renderCartUI();
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    document.getElementById('filterToggle').addEventListener('click', ()=>{
+      const f = document.getElementById('filters');
+      if(getComputedStyle(f).display === 'none' || window.innerWidth < 900){
+        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+      } else {
+        f.style.display = 'none';
+      }
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(b => {
+      b.addEventListener('click', (e)=> {
+        if(e.target === b) b.style.display = 'none';
+      });
+    });
+    window._PRODUCTS = PRODUCTS;
+    window._renderProducts = renderProducts;
+  </script>
+  <script>
+const AUTH_KEY = 'shopdemo_user';
+const authBtn = document.getElementById('authBtn');
+const authBackdrop = document.getElementById('authBackdrop');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const loginTab = document.getElementById('loginTab');
+const registerTab = document.getElementById('registerTab');
+
+function getUser(){ try{return JSON.parse(localStorage.getItem(AUTH_KEY))}catch(e){return null} }
+function setUser(u){ localStorage.setItem(AUTH_KEY, JSON.stringify(u)); updateAuthUI(); }
+function logout(){ localStorage.removeItem(AUTH_KEY); updateAuthUI(); }
+
+function updateAuthUI(){
+  const u = getUser();
+  if(u){
+    authBtn.textContent = "Xin chào, " + u.name + " (Đăng xuất)";
+    authBtn.onclick = ()=>{ logout(); showToast("Đã đăng xuất"); };
+  }else{
+    authBtn.textContent = "Đăng nhập";
+    authBtn.onclick = ()=>{ authBackdrop.style.display = 'flex'; showLogin(); };
+  }
+}
+updateAuthUI();
+
+document.getElementById('closeAuth').addEventListener('click', ()=> authBackdrop.style.display='none');
+loginTab.addEventListener('click', showLogin);
+registerTab.addEventListener('click', showRegister);
+
+function showLogin(){
+  loginForm.style.display='block';
+  registerForm.style.display='none';
+  loginTab.classList.remove('secondary');
+  registerTab.classList.add('secondary');
+}
+function showRegister(){
+  loginForm.style.display='none';
+  registerForm.style.display='block';
+  registerTab.classList.remove('secondary');
+  loginTab.classList.add('secondary');
+}
+
+loginForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value.trim();
+  const u = getUser();
+  if(!u){ showToast("Chưa có tài khoản, vui lòng đăng ký."); return; }
+  if(u.email===email && u.password===pass){
+    showToast("Đăng nhập thành công");
+    authBackdrop.style.display='none';
+    updateAuthUI();
+  }else{
+    showToast("Sai email hoặc mật khẩu");
+  }
+});
+
+registerForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value.trim();
+  if(!name||!email||!pass){ showToast("Điền đầy đủ thông tin"); return; }
+  setUser({name,email,password:pass});
+  showToast("Đăng ký thành công");
+  authBackdrop.style.display='none';
+});
+  </script>
+</body>
+</html>
+    
