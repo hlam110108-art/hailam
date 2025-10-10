@@ -237,6 +237,7 @@
       <div id="authTabs" style="margin-bottom:12px;display:flex;gap:8px;">
         <button class="btn" id="loginTab">Đăng nhập</button>
         <button class="btn secondary" id="registerTab">Đăng ký</button>
+        <button class="btn secondary" id="adminBtn" style="margin-left:8px;">Admin</button>
       </div>
 
       <form id="loginForm">
@@ -265,14 +266,133 @@
           <button type="submit" class="btn">Đăng ký</button>
         </div>
       </form>
+      <!-- Admin modal -->
+<div class="modal-backdrop" id="adminAuthBackdrop" aria-hidden style="display:none">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:520px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">Admin</h3>
+      <button class="close" id="closeAdminAuth">✕</button>
+    </div>
+
+    <!-- Step 1: admin auth -->
+    <div id="adminAuthStep">
+      <p class="muted">Nhập mật khẩu admin để quản lý sản phẩm.</p>
+      <label>Mật khẩu admin
+        <input id="adminPassword" type="password" />
+      </label>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <button class="btn" id="adminAuthBtn">Xác nhận</button>
+      </div>
+    </div>
+
+    <!-- Step 2: admin panel (ẩn lúc đầu) -->
+    <div id="adminPanel" style="display:none; margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong>Quản lý sản phẩm</strong>
+        <div>
+          <button class="btn secondary" id="adminLogout">Thoát</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <form id="adminForm" style="display:flex;flex-direction:column;gap:8px;">
+          <input id="prodId" type="hidden" />
+          <label>Tên sản phẩm <input id="prodTitle" required /></label>
+          <label>Giá (VNĐ) <input id="prodPrice" type="number" required /></label>
+          <label>Danh mục <input id="prodCategory" /></label>
+          <label>Đánh giá <input id="prodRating" type="number" step="0.1" min="0" max="5" /></label>
+          <label>Ảnh (URL) <input id="prodImg" /></label>
+          <label>Mô tả <textarea id="prodDesc" rows="3"></textarea></label>
+          <label><input id="prodFast" type="checkbox" /> Giao nhanh</label>
+
+          <div style="display:flex;gap:8px;">
+            <button class="btn" id="saveProdBtn" type="button">Lưu</button>
+            <button class="btn secondary" id="resetProdBtn" type="button">Làm mới</button>
+          </div>
+        </form>
+      </div>
+
+      <hr />
+
+      <div>
+        <div id="adminList" style="max-height:240px;overflow:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
     </div>
   </div>
 </div>
 
-  <footer>
-    <div class="container">
+<footer style="background:#fff;border-top:1px solid #e6e9ee;padding:28px 0 36px;">
+  <div class="container" style="max-width:1100px;margin:0 auto;padding:0 16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 320px;gap:18px;align-items:start;">
+      <div>
+        <h4 style="margin:0 0 8px 0;font-size:16px">Đăng ký nhận tin</h4>
+        <p class="muted" style="margin:0 0 10px;">Nhập email để nhận chương trình khuyến mãi mới nhất.</p>
+        <div style="display:flex;gap:8px;">
+          <input type="email" placeholder="Email của bạn" style="flex:1;padding:8px;border:1px solid #e6edf8;border-radius:8px" />
+          <button class="btn" style="padding:8px 12px;border-radius:8px">Đăng ký</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <div style="min-width:140px">
+          <h5 style="margin:0 0 8px 0;font-size:14px">Danh mục</h5>
+          <ul style="list-style:none;padding:0;margin:0;color:var(--muted);line-height:1.8">
+            <li><a href="#products">Laptop</a></li>
+            <li><a href="#products">Phụ kiện</a></li>
+            <li><a href="#contact">Liên hệ</a></li>
+          </ul>
+        </div>
+
+        <div style="min-width:140px">
+          <h5 style="margin:0 0 8px 0;font-size:14px">Hỗ trợ</h5>
+          <ul style="list-style:none;padding:0;margin:0;color:var(--muted);line-height:1.8">
+            <li><a href="#">Chính sách đổi trả</a></li>
+            <li><a href="#">Vận chuyển</a></li>
+            <li><a href="#">Câu hỏi thường gặp</a></li>
+            <li><a href="#">Hướng dẫn mua hàng</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Column 3: Company info / address -->
+      <div style="background:#fafbfd;padding:12px;border-radius:8px;border:1px solid #eef4ff">
+        <h5 style="margin:0 0 6px 0;font-size:15px">Công ty</h5>
+
+        <div style="font-size:14px;margin-bottom:8px">
+          <div style="font-weight:700">Công ty TNHH Thương Mại và Dịch Vụ Kỹ Thuật Hlam</div>
+          <div class="muted" style="font-size:13px;margin-top:6px">
+            GPKDKD: 033xxxxxx — Cấp tại Sở KH & ĐT Vinh Long
+          </div>
+        </div>
+
+        <div style="font-size:14px;margin-bottom:8px">
+          <div class="muted" style="font-size:13px">Địa chỉ văn phòng:</div>
+          <div style="font-weight:600"> Châu Bình, Giồng Trôm, Vĩnh Long</div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <div style="font-size:13px;color:var(--muted)">Điện thoại:</div>
+          <div style="font-weight:700">028.7108.9666</div>
+          </div>
+
+        <div style="margin-top:10px;font-size:13px;color:var(--muted)">© <span id="yearFooter"></span> Hlam — Mọi quyền được bảo lưu.</div>
+      </div>
     </div>
-  </footer>
+
+    <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div class="muted" style="font-size:13px">Back to school là gì • Chính sách bảo mật • Điều khoản</div>
+      <div style="display:flex;gap:8px;align-items:center">
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('yearFooter').textContent = new Date().getFullYear();
+</script>
    <script>
     const PRODUCTS = [
       { id: 'p1', title: 'Laptop MSI Modern 14 C12MO-660VN', price: 11790000, category:'Điện tử', rating:4.5, img:'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_5_16.png', fastShip:true, desc:'Laptop MSI Modern 14 C12MO-660VN sở hữu con chip Intel I5-1235U cùng bộ nhớ RAM lớn 16GB thoải mái đa nhiệm. Cùng với đó sản phẩm còn mang lại khả năng lưu trữ thoải mái với ổ cứng SSD PCIE dung lượng 512GB. Máy còn sở hữu màn hình kích thước 14 inch FHD hỗ trợ hiển thị hình ảnh sống động.' },
@@ -668,6 +788,175 @@ registerForm.addEventListener('submit', e=>{
   showToast("Đăng ký thành công");
   authBackdrop.style.display='none';
 });
+
+const ADMIN_PASSWORD = 'Hlam110108';
+const adminBtn = document.getElementById('adminBtn');
+const adminAuthBackdrop = document.getElementById('adminAuthBackdrop');
+const closeAdminAuth = document.getElementById('closeAdminAuth');
+const adminAuthBtn = document.getElementById('adminAuthBtn');
+const adminPasswordInput = document.getElementById('adminPassword');
+const adminAuthStep = document.getElementById('adminAuthStep');
+const adminPanel = document.getElementById('adminPanel');
+const adminLogout = document.getElementById('adminLogout');
+
+const adminForm = document.getElementById('adminForm');
+const prodIdEl = document.getElementById('prodId');
+const prodTitle = document.getElementById('prodTitle');
+const prodPrice = document.getElementById('prodPrice');
+const prodCategory = document.getElementById('prodCategory');
+const prodRating = document.getElementById('prodRating');
+const prodImg = document.getElementById('prodImg');
+const prodDesc = document.getElementById('prodDesc');
+const prodFast = document.getElementById('prodFast');
+const saveProdBtn = document.getElementById('saveProdBtn');
+const resetProdBtn = document.getElementById('resetProdBtn');
+const adminList = document.getElementById('adminList');
+
+let adminAuthenticated = sessionStorage.getItem('isAdmin') === '1';
+function openAdminModal(){
+  adminAuthBackdrop.style.display = 'flex';
+  adminPasswordInput.value = '';
+  if(adminAuthenticated){
+    adminAuthStep.style.display = 'none';
+    adminPanel.style.display = 'block';
+    renderAdminList();
+  } else {
+    adminAuthStep.style.display = 'block';
+    adminPanel.style.display = 'none';
+  }
+}
+function closeAdminModal(){
+  adminAuthBackdrop.style.display = 'none';
+}
+adminBtn.addEventListener('click', openAdminModal);
+closeAdminAuth.addEventListener('click', closeAdminModal);
+
+
+adminAuthBtn.addEventListener('click', ()=>{
+  const pw = adminPasswordInput.value || '';
+  if(pw === ADMIN_PASSWORD){
+    adminAuthenticated = true;
+    sessionStorage.setItem('isAdmin','1');
+    adminAuthStep.style.display = 'none';
+    adminPanel.style.display = 'block';
+    renderAdminList();
+    showToast('Đăng nhập admin thành công');
+  } else {
+    showToast('Mật khẩu admin không đúng');
+  }
+});
+
+adminLogout.addEventListener('click', ()=>{
+  adminAuthenticated = false;
+  sessionStorage.removeItem('isAdmin');
+  adminPanel.style.display = 'none';
+  adminAuthStep.style.display = 'block';
+});
+
+function genId(){
+  return 'p' + Date.now().toString(36);
+}
+
+function renderAdminList(){
+  const prods = loadProducts();
+  if(!prods.length){
+    adminList.innerHTML = '<div class="muted">Chưa có sản phẩm.</div>';
+    return;
+  }
+  let html = '';
+  prods.slice().reverse().forEach(p=>{
+    html += `<div style="border:1px solid #eef4ff;padding:8px;border-radius:8px;margin-bottom:8px;display:flex;gap:8px;align-items:center">
+      <img src="${p.img||'https://via.placeholder.com/80'}" style="width:60px;height:60px;object-fit:cover;border-radius:6px" />
+      <div style="flex:1">
+        <div style="font-weight:700">${escapeHtml(p.title)}</div>
+        <div class="muted" style="font-size:13px">${p.category} • ${formatVND(p.price)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn" data-action="edit" data-id="${p.id}">Sửa</button>
+        <button class="btn secondary" data-action="del" data-id="${p.id}">Xóa</button>
+      </div>
+    </div>`;
+  });
+  adminList.innerHTML = html;
+
+  adminList.querySelectorAll('[data-action="edit"]').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      const id = e.currentTarget.dataset.id;
+      const p = loadProducts().find(x=>x.id===id);
+      if(!p) return;
+      prodIdEl.value = p.id;
+      prodTitle.value = p.title;
+      prodPrice.value = p.price;
+      prodCategory.value = p.category;
+      prodRating.value = p.rating;
+      prodImg.value = p.img;
+      prodDesc.value = p.desc;
+      prodFast.checked = !!p.fastShip;
+
+      prodTitle.focus();
+    });
+  });
+  adminList.querySelectorAll('[data-action="del"]').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      const id = e.currentTarget.dataset.id;
+      if(!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+      let arr = loadProducts();
+      arr = arr.filter(x=>x.id !== id);
+      saveProducts(arr);
+      PRODUCTS = loadProducts(); 
+      renderAdminList();
+      applyFilters();
+      showToast('Đã xóa');
+    });
+  });
+}
+
+saveProdBtn.addEventListener('click', ()=>{
+  const id = prodIdEl.value || '';
+  const title = prodTitle.value.trim();
+  const price = Number(prodPrice.value) || 0;
+  if(!title || price <= 0){ showToast('Vui lòng nhập tên và giá hợp lệ'); return; }
+  const item = {
+    id: id || genId(),
+    title, price,
+    category: prodCategory.value.trim() || 'Khác',
+    rating: Number(prodRating.value) || 4.0,
+    img: prodImg.value.trim() || 'https://via.placeholder.com/400',
+    fastShip: !!prodFast.checked,
+    desc: prodDesc.value.trim() || ''
+  };
+  let arr = loadProducts();
+  if(id){
+
+    const idx = arr.findIndex(x=>x.id===id);
+    if(idx >= 0) arr[idx] = item;
+  } else {
+
+    arr.unshift(item);
+  }
+  saveProducts(arr);
+  PRODUCTS = loadProducts();
+  renderAdminList();
+  applyFilters();
+  resetAdminForm();
+  showToast('Lưu sản phẩm thành công');
+});
+
+function resetAdminForm(){
+  prodIdEl.value = '';
+  prodTitle.value = '';
+  prodPrice.value = '';
+  prodCategory.value = '';
+  prodRating.value = '';
+  prodImg.value = '';
+  prodDesc.value = '';
+  prodFast.checked = false;
+}
+resetProdBtn.addEventListener('click', resetAdminForm);
+
+if(adminAuthenticated){
+  console.log('admin session active');
+}
   </script>
 </body>
 </html>
